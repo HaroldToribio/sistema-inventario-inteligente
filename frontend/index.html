@@ -19,6 +19,8 @@
     <li onclick="mostrarSeccion('dashboard')">📊 Dashboard</li>
     <li onclick="mostrarSeccion('productos')">📦 Productos</li>
     <li onclick="mostrarSeccion('prediccion')">🤖 Predicción ML</li>
+    <li onclick="mostrarSeccion('recomendaciones')">🛍️ Recomendaciones</li>
+    <li onclick="mostrarSeccion('clientes')">👥 Clientes</li>
     <li onclick="mostrarSeccion('reportes')">📈 Reportes</li>
   </ul>
 </nav>
@@ -113,10 +115,123 @@
     </div>
   </section>
 
+  <!-- RECOMENDACIONES -->
+  <section id="recomendaciones" class="seccion">
+    <h2>🛍️ Recomendaciones Personalizadas</h2>
+    <p class="seccion-desc">Filtrado colaborativo: recomendamos productos basándonos en clientes con patrones de compra similares, al estilo Amazon o Shein.</p>
+
+    <div class="prediccion-controls">
+      <label>Cliente:
+        <select id="selectCliente"></select>
+      </label>
+      <label>Recomendaciones:
+        <select id="selectTopN">
+          <option value="3">3 productos</option>
+          <option value="5">5 productos</option>
+        </select>
+      </label>
+      <button onclick="cargarRecomendaciones()">🔍 Recomendar</button>
+    </div>
+
+    <div id="rec-loading" style="display:none; text-align:center; padding:2rem;">
+      ⏳ Analizando patrones de compra...
+    </div>
+
+    <div id="rec-resultado" style="display:none">
+
+      <div class="stats">
+        <div class="card">Clientes analizados: <span id="recTotalClientes">—</span></div>
+        <div class="card">Ya compró: <span id="recHistorialCount">—</span> producto(s)</div>
+      </div>
+
+      <h3>🛒 Historial de compras del cliente</h3>
+      <div id="recHistorial" class="chips-container"></div>
+
+      <h3>✨ Productos recomendados</h3>
+      <div id="recTarjetas" class="rec-cards"></div>
+
+    </div>
+  </section>
+
+  <!-- CLIENTES -->
+  <section id="clientes" class="seccion">
+    <h2>👥 Clientes</h2>
+    <div class="dashboard">
+
+      <div class="productos-left">
+        <form id="form-cliente">
+          <input type="text"  id="cliente-nombre" placeholder="Nombre del cliente" required>
+          <input type="email" id="cliente-email"  placeholder="Email (opcional)">
+          <small class="form-hint">📊 Se generarán compras iniciales simuladas para activar las recomendaciones desde el primer día.</small>
+          <button type="submit">➕ Agregar Cliente</button>
+        </form>
+        <ul id="lista-clientes"></ul>
+      </div>
+
+      <div class="dashboard-right">
+        <h3>Resumen</h3>
+        <div class="card">
+          <p>Total Clientes</p>
+          <h2 id="totalClientes">0</h2>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
   <!-- REPORTES -->
   <section id="reportes" class="seccion">
-    <h2>Reportes por Producto</h2>
-    <canvas id="graficaProductos"></canvas>
+    <h2>📈 Reportes y Estadísticas</h2>
+    <p class="seccion-desc">Análisis completo del comportamiento de ventas, tendencias temporales y patrones de compra conjunta.</p>
+
+    <!-- FILA 1: KPIs rápidos de reportes -->
+    <div class="stats" id="reportes-kpis">
+      <div class="card">Producto más vendido (unidades): <span id="rTopUnidades">—</span></div>
+      <div class="card">Producto más rentable ($): <span id="rTopIngresos">—</span></div>
+      <div class="card">Mes con más ventas: <span id="rMejorMes">—</span></div>
+      <div class="card">Par comprado juntos más frecuente: <span id="rTopPar">—</span></div>
+    </div>
+
+    <!-- FILA 2: Ventas totales por producto (barras) + Participación (dona) -->
+    <div class="reportes-grid">
+
+      <div class="reporte-card">
+        <h3>💰 Ingresos totales por producto</h3>
+        <canvas id="graficaProductos"></canvas>
+      </div>
+
+      <div class="reporte-card">
+        <h3>🥧 Participación en unidades vendidas</h3>
+        <canvas id="graficaParticipacion"></canvas>
+      </div>
+
+    </div>
+
+    <!-- FILA 3: Tendencia mensual (línea) -->
+    <div class="reporte-card reporte-full">
+      <h3>📅 Tendencia de ventas mensual</h3>
+      <div style="display:flex; gap:2rem; flex-wrap:wrap; align-items:flex-start">
+        <div style="flex:2; min-width:300px">
+          <canvas id="graficaTendencia"></canvas>
+        </div>
+        <div style="flex:1; min-width:200px">
+          <canvas id="graficaIngresosMes"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILA 4: Pares de productos comprados juntos -->
+    <div class="reporte-card reporte-full">
+      <h3>🔗 Productos comprados juntos con más frecuencia</h3>
+      <p class="seccion-desc" style="margin-bottom:1rem">Qué combinaciones de productos aparecen más en los pedidos de los mismos clientes — base del motor de recomendaciones.</p>
+      <div style="display:flex; gap:2rem; flex-wrap:wrap; align-items:flex-start">
+        <div style="flex:1; min-width:280px">
+          <canvas id="graficaPares"></canvas>
+        </div>
+        <div style="flex:1; min-width:260px" id="tablaPares"></div>
+      </div>
+    </div>
+
   </section>
 
 </main>

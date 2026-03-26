@@ -147,6 +147,13 @@ form {
   margin-bottom: 1.2rem;
 }
 
+.form-hint {
+  color: #6c757d;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  margin-top: -0.2rem;
+}
+
 input[type="text"],
 input[type="number"],
 select {
@@ -258,3 +265,134 @@ button:hover { background: #a29bfe; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #1a1a2e; }
 ::-webkit-scrollbar-thumb { background: #2d3561; border-radius: 3px; }
+
+/* ── DESCRIPCIÓN DE SECCIÓN ── */
+.seccion-desc {
+  color: #8e9ab5;
+  font-size: 0.88rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+/* ── CHIPS (historial de compras) ── */
+.chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.chip {
+  background: rgba(108, 99, 255, 0.18);
+  border: 1px solid #6c63ff;
+  color: #c8c4ff;
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+}
+
+.chip-empty {
+  background: transparent;
+  border-color: #444;
+  color: #666;
+}
+
+/* ── TARJETAS DE RECOMENDACIÓN ── */
+.rec-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  margin-top: 0.5rem;
+}
+
+.rec-card {
+  background: #16213e;
+  border: 1px solid #2d3561;
+  border-radius: 12px;
+  padding: 1.2rem 1.4rem;
+  min-width: 220px;
+  flex: 1;
+  max-width: 280px;
+  position: relative;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.rec-card:hover {
+  border-color: #6c63ff;
+  transform: translateY(-3px);
+}
+
+.rec-rank {
+  position: absolute;
+  top: 0.75rem;
+  right: 1rem;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: rgba(108, 99, 255, 0.4);
+}
+
+.rec-nombre {
+  font-size: 1.05rem;
+  font-weight: bold;
+  color: #e0e0e0;
+  margin-bottom: 0.4rem;
+  padding-right: 2rem;
+}
+
+.rec-precio {
+  font-size: 1.2rem;
+  color: #48cfad;
+  font-weight: bold;
+  margin-bottom: 0.4rem;
+}
+
+.rec-cat {
+  font-size: 0.75rem;
+  color: #888;
+  background: rgba(255,255,255,0.05);
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 10px;
+  margin-bottom: 0.6rem;
+}
+
+.rec-razon {
+  font-size: 0.8rem;
+  color: #9b9fc4;
+  margin-bottom: 0.4rem;
+  line-height: 1.4;
+}
+
+.rec-score {
+  font-size: 0.72rem;
+  color: #555;
+}
+
+/* ── REPORTES GRID ── */
+.reportes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .reportes-grid { grid-template-columns: 1fr; }
+}
+
+.reporte-card {
+  background: #16213e;
+  border: 1px solid #2d3561;
+  border-radius: 12px;
+  padding: 1.4rem 1.6rem;
+}
+
+.reporte-card h3 {
+  color: #a29bfe;
+  margin-bottom: 1.1rem;
+  font-size: 0.95rem;
+}
+
+.reporte-full {
+  margin-bottom: 1.5rem;
+}

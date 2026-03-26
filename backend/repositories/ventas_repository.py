@@ -28,12 +28,13 @@ class VentasRepository:
         # Obtener el id_producto recién insertado
         cursor.execute("SELECT LAST_INSERT_ID() AS id")
         row = cursor.fetchone()
-        nuevo_id = row[0] if row else None # type: ignore
+        nuevo_id = row[0] if row else None #type: ignore
 
         conn.close()
         return nuevo_id
 
     def simular_ventas_historicas(self, id_producto, promedio_diario, dias=90):
+        """Llama al SP que genera ventas simuladas para un producto nuevo."""
         conn = DatabaseConnection().get_connection()
         cursor = conn.cursor()
 
@@ -104,5 +105,24 @@ class VentasRepository:
         for result in cursor.stored_results():
             data = result.fetchall()
 
+        conn.close()
+        return data
+    def obtener_ventas_por_mes(self):
+        conn = DatabaseConnection().get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.callproc('ObtenerVentasPorMes')
+        data = []
+        for result in cursor.stored_results():
+            data = result.fetchall()
+        conn.close()
+        return data
+
+    def obtener_pares_productos(self):
+        conn = DatabaseConnection().get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.callproc('ObtenerParesProductos')
+        data = []
+        for result in cursor.stored_results():
+            data = result.fetchall()
         conn.close()
         return data
