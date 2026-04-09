@@ -249,3 +249,212 @@ BEGIN
 END$$
  
 DELIMITER ;
+
+-- =========================================
+-- MEJORA: SISTEMA DE RECOMENDACIONES
+-- Filtrado Colaborativo tipo Amazon/Shein
+-- =========================================
+
+-- Tabla de clientes
+CREATE TABLE IF NOT EXISTS clientes (
+    id_cliente  INT AUTO_INCREMENT PRIMARY KEY,
+    nombre      VARCHAR(100) NOT NULL,
+    email       VARCHAR(150) UNIQUE
+);
+
+-- Ligar ventas a clientes (columna opcional para no romper datos existentes)
+ALTER TABLE ventas
+    ADD COLUMN id_cliente INT NULL,
+    ADD CONSTRAINT fk_ventas_cliente
+        FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente);
+        
+-- ── Datos de prueba: clientes ──────────────────────────────────────
+INSERT INTO clientes (nombre, email) VALUES
+('Ana García',     'ana@mail.com'),
+('Luis Martínez',  'luis@mail.com'),
+('María López',    'maria@mail.com'),
+('Carlos Pérez',   'carlos@mail.com'),
+('Sofia Ramírez',  'sofia@mail.com'),
+('Pedro Jiménez',  'pedro@mail.com'),
+('Laura Torres',   'laura@mail.com'),
+('Diego Herrera',  'diego@mail.com');
+
+-- ── Datos de prueba: compras por cliente ──────────────────────────
+-- Ana: compró Laptop + Mouse (perfil tecnología completa)
+UPDATE ventas SET id_cliente = 1 WHERE id_producto = 1 AND fecha = '2024-01-01';
+UPDATE ventas SET id_cliente = 1 WHERE id_producto = 2 AND fecha = '2024-01-02';
+-- Luis: compró Mouse + Teclado
+UPDATE ventas SET id_cliente = 2 WHERE id_producto = 2 AND fecha = '2024-01-06';
+UPDATE ventas SET id_cliente = 2 WHERE id_producto = 3 AND fecha = '2024-01-03';
+-- María: compró Laptop (sola)
+UPDATE ventas SET id_cliente = 3 WHERE id_producto = 1 AND fecha = '2024-01-05';
+-- Carlos: compró Mouse + Teclado
+UPDATE ventas SET id_cliente = 4 WHERE id_producto = 2 AND fecha = '2024-01-12';
+UPDATE ventas SET id_cliente = 4 WHERE id_producto = 3 AND fecha = '2024-01-09';
+-- Sofia: compró Laptop + Teclado
+UPDATE ventas SET id_cliente = 5 WHERE id_producto = 1 AND fecha = '2024-01-10';
+UPDATE ventas SET id_cliente = 5 WHERE id_producto = 3 AND fecha = '2024-01-25';
+
+-- =========================================
+-- SP: LISTAR CLIENTES
+-- =========================================
+DELIMITER $$
+ 
+CREATE PROCEDURE ListarClientes()
+BEGIN
+    SELECT id_cliente, nombre, email
+    FROM clientes
+    ORDER BY nombre;
+END$$
+ 
+DELIMITER ;
+
+-- =========================================
+-- SP: CREAR CLIENTE
+-- =========================================
+DELIMITER $$
+ 
+CREATE PROCEDURE CrearCliente(
+    IN p_nombre VARCHAR(100),
+    IN p_email  VARCHAR(150)
+)
+BEGIN
+    INSERT INTO clientes (nombre, email)
+    VALUES (p_nombre, p_email);
+END$$
+ 
+DELIMITER ;
+
+-- =========================================
+-- SP: HISTORIAL DE COMPRAS POR CLIENTE
+-- Devuelve qué productos compró un cliente
+-- =========================================
+DELIMITER $$
+ 
+CREATE PROCEDURE HistorialComprasCliente(IN p_id_cliente INT)
+BEGIN
+    SELECT DISTINCT
+        p.id_producto,
+        p.nombre,
+        p.categoria,
+        p.precio,
+        COUNT(v.id_venta)       AS veces_comprado,
+        SUM(v.cantidad)         AS total_unidades
+    FROM ventas v
+    JOIN productos p ON v.id_producto = p.id_producto
+    WHERE v.id_cliente = p_id_cliente
+    GROUP BY p.id_producto, p.nombre, p.categoria, p.precio
+    ORDER BY total_unidades DESC;
+END$$
+ 
+DELIMITER ;
+
+-- =========================================
+-- SP: MATRIZ CLIENTE-PRODUCTO
+-- Para el filtrado colaborativo en Python
+-- Devuelve todas las compras de todos los clientes
+-- =========================================
+DELIMITER $$
+ 
+CREATE PROCEDURE ObtenerMatrizCompras()
+BEGIN
+    SELECT
+        v.id_cliente,
+        v.id_producto,
+        SUM(v.cantidad) AS total_comprado
+    FROM ventas v
+    WHERE v.id_cliente IS NOT NULL
+    GROUP BY v.id_cliente, v.id_producto;
+END$$
+ 
+DELIMITER ;
+
+-- =========================================
+-- SP: SIMULAR COMPRAS PARA CLIENTE NUEVO
+-- Genera compras aleatorias para cold-start
+-- =========================================
+DELIMITER $$
+ 
+CREATE PROCEDURE SimularComprasCliente(
+    IN p_id_cliente INT,
+    IN p_num_productos INT   -- cuántos productos distintos asignarle (ej: 2)
+)
+BEGIN
+    DECLARE i         INT DEFAULT 0;
+    DECLARE pid       INT;
+    DECLARE cant      INT;
+    DECLARE total_p   INT;
+    DECLARE fecha_c   DATE;
+ 
+    SELECT COUNT(*) INTO total_p FROM productos;
+ 
+    WHILE i < p_num_productos DO
+        -- Producto aleatorio
+        SELECT id_producto INTO pid
+        FROM productos
+        ORDER BY RAND()
+        LIMIT 1;
+ 
+        -- Cantidad aleatoria entre 1 y 5
+        SET cant   = 1 + FLOOR(RAND() * 5);
+        SET fecha_c = DATE_SUB(CURDATE(), INTERVAL FLOOR(RAND() * 60) DAY);
+ 
+        -- Solo insertar si no compró ya ese producto
+        IF NOT EXISTS (
+            SELECT 1 FROM ventas
+            WHERE id_cliente = p_id_cliente AND id_producto = pid
+        ) THEN
+            INSERT INTO ventas (id_producto, fecha, cantidad, id_cliente)
+            VALUES (pid, fecha_c, cant, p_id_cliente);
+        END IF;
+ 
+        SET i = i + 1;
+    END WHILE;
+END$$
+ 
+DELIMITER ;
+
+-- =========================================
+-- SP: VENTAS POR MES (tendencia temporal)
+-- =========================================
+DELIMITER $$
+ 
+CREATE PROCEDURE ObtenerVentasPorMes()
+BEGIN
+    SELECT
+        DATE_FORMAT(v.fecha, '%Y-%m') AS mes,
+        SUM(v.cantidad)               AS total_unidades,
+        ROUND(SUM(v.cantidad * p.precio), 2) AS total_ingresos
+    FROM ventas v
+    JOIN productos p ON v.id_producto = p.id_producto
+    GROUP BY DATE_FORMAT(v.fecha, '%Y-%m')
+    ORDER BY mes;
+END$$
+ 
+DELIMITER ;
+
+-- =========================================
+-- SP: PARES DE PRODUCTOS MAS COMPRADOS JUNTOS
+-- Para el reporte de "frecuencia de compra conjunta"
+-- =========================================
+DELIMITER $$
+ 
+CREATE PROCEDURE ObtenerParesProductos()
+BEGIN
+    SELECT
+        p1.nombre  AS producto_a,
+        p2.nombre  AS producto_b,
+        COUNT(*)   AS veces_juntos
+    FROM ventas v1
+    JOIN ventas v2
+        ON  v1.id_cliente  = v2.id_cliente
+        AND v1.id_producto < v2.id_producto   -- evitar duplicados
+    JOIN productos p1 ON v1.id_producto = p1.id_producto
+    JOIN productos p2 ON v2.id_producto = p2.id_producto
+    WHERE v1.id_cliente IS NOT NULL
+    GROUP BY p1.nombre, p2.nombre
+    ORDER BY veces_juntos DESC
+    LIMIT 10;
+END$$
+ 
+DELIMITER ;
